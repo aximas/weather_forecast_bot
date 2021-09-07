@@ -1,18 +1,25 @@
 const {Telegraf, Markup} = require('telegraf');
 require('dotenv').config();
 const text = require('./const');
+const report = require('./report');
 const axios = require('axios');
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
-const weatherAPItoken = process.env.WEATHER_API_TOKEN;
+const weatherAPIToken = process.env.WEATHER_API_TOKEN;
 
-bot.start((ctx) => ctx.reply(`Hello ${ctx.message.from.first_name ? ctx.message.from.first_name : ctx.message.from.username}`));
+bot.start((ctx) => {
+    ctx.reply(`Hello ${ctx.message.from.first_name ? ctx.message.from.first_name : ctx.message.from.username}`);
+    report.users.push(ctx.message.from.username);
+    console.log(report.users);
+});
 bot.help((ctx) => ctx.reply(`${text.commads}`));
 
+// kelvin to celsius function
 const temperatureConverter = (temp) => {
     return (temp - 273.15).toFixed(1);
 }
 
+// weather command events
 bot.command('weather', async (ctx) => {
     try {
         ctx.replyWithHTML('<b>Choose by</b>', Markup.inlineKeyboard(
@@ -26,6 +33,7 @@ bot.command('weather', async (ctx) => {
     }
 });
 
+// input city event
 bot.action('btn_city', async (ctx) => {
     try {
         await ctx.answerCbQuery();
@@ -36,6 +44,7 @@ bot.action('btn_city', async (ctx) => {
     }
 });
 
+// input geo event
 bot.action('btn_geo', async (ctx) => {
     try {
         await ctx.answerCbQuery();
@@ -46,10 +55,11 @@ bot.action('btn_geo', async (ctx) => {
     }
 });
 
+// input text as city
 bot.on('text', async (ctx) => {
     const city = await ctx.message.text
     try {
-        const weather = await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${weatherAPItoken}`).then(response => response.data);
+        const weather = await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${weatherAPIToken}`).then(response => response.data);
         await ctx.replyWithHTML(`Location: <b>${weather.name}</b> \n Temperature: <b>${temperatureConverter(weather.main.temp)}°C </b>`);
         console.log(weather.main.temp - 273.15);
     } catch (e) {
@@ -58,11 +68,12 @@ bot.on('text', async (ctx) => {
     }
 });
 
+// share with location as geo
 bot.on('location', async (ctx) => {
     const location = await ctx.message.location;
     console.log(location);
     try {
-        const weather = await axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.longitude}&appid=${weatherAPItoken}`).then(response => response.data);
+        const weather = await axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.longitude}&appid=${weatherAPIToken}`).then(response => response.data);
         console.log(weather.name);
         console.log((weather.main.temp - 273.15).toFixed(1));
         ctx.replyWithHTML(`Location: <b>${weather.name}</b> \n Temperature: <b>${temperatureConverter(weather.main.temp)}°C </b>`);
@@ -71,6 +82,8 @@ bot.on('location', async (ctx) => {
         console.error(e.config.url, ctx.message.from.username);
     }
 });
+
+// bot.on('new_chat_members', (ctx) => console.log(ctx.message.new_chat_members))
 
 bot.launch();
 console.log('Bot launched');
