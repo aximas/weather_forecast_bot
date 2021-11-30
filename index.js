@@ -8,9 +8,20 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 const weatherAPIToken = process.env.WEATHER_API_TOKEN;
 
 bot.start((ctx) => {
-    ctx.reply(`Hello ${ctx.message.from.first_name ? ctx.message.from.first_name : ctx.message.from.username}`);
-    report.users.push(ctx.message.from.username);
+    ctx.reply(`Hello ${ctx.message.from.first_name ? ctx.message.from.first_name : ctx.message.from.username}, type /weather`);
+
+    Array.prototype.contains = function (element) {
+        return this.indexOf(element) > -1
+    }
+    if (report.users.length > 0 && !report.users.contains(ctx.message.from.username)) {
+        report.users.push(ctx.message.from.username);
+    } else if (report.users.length === 0) {
+        report.users.push(ctx.message.from.username);
+    } else {
+        return;
+    }
     console.log(report.users);
+
 });
 bot.help((ctx) => ctx.reply(`${text.commads}`));
 
