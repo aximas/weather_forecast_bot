@@ -1,4 +1,4 @@
-const {Telegraf, Markup} = require('telegraf');
+const { Telegraf, Markup } = require('telegraf');
 require('dotenv').config();
 const text = require('./const');
 const report = require('./report');
@@ -10,7 +10,7 @@ const weatherAPIToken = process.env.WEATHER_API_TOKEN;
 bot.start((ctx) => {
     ctx.reply(`Hello ${ctx.message.from.first_name ? ctx.message.from.first_name : ctx.message.from.username}, type /weather`);
 
-    Array.prototype.contains = function (element) {
+    Array.prototype.contains = function(element) {
         return this.indexOf(element) > -1
     }
     if (report.users.length > 0 && !report.users.contains(ctx.message.from.username)) {
@@ -31,7 +31,7 @@ const temperatureConverter = (temp) => {
 }
 
 // weather command events
-bot.command('weather', async (ctx) => {
+bot.command('weather', async(ctx) => {
     try {
         ctx.replyWithHTML('<b>Choose by</b>', Markup.inlineKeyboard(
             [
@@ -45,7 +45,7 @@ bot.command('weather', async (ctx) => {
 });
 
 // input city event
-bot.action('btn_city', async (ctx) => {
+bot.action('btn_city', async(ctx) => {
     try {
         await ctx.answerCbQuery();
         await ctx.reply('Input your city');
@@ -56,7 +56,7 @@ bot.action('btn_city', async (ctx) => {
 });
 
 // input geo event
-bot.action('btn_geo', async (ctx) => {
+bot.action('btn_geo', async(ctx) => {
     try {
         await ctx.answerCbQuery();
         await ctx.reply('Please share with your location');
@@ -67,11 +67,20 @@ bot.action('btn_geo', async (ctx) => {
 });
 
 // input text as city
-bot.on('text', async (ctx) => {
+bot.on('text', async(ctx) => {
     const city = await ctx.message.text
     try {
         const weather = await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${weatherAPIToken}`).then(response => response.data);
-        await ctx.replyWithHTML(`Location: <b>${weather.name}</b> \n Temperature: <b>${temperatureConverter(weather.main.temp)}°C </b>`);
+        ctx.replyWithHTML(`Location: <b>${weather.name}</b> \n 
+                            Temperature: <b>${temperatureConverter(weather.main.temp)}°C</b> \n
+                            Feels like: <b>${temperatureConverter(weather.main.feels_like)}°C</b> \n
+                            Pressure: <b>${weather.main.pressure} Pa</b> \n
+                            Humidity: <b>${weather.main.humidity}%</b> \n
+                            Visibility: <b>${weather.visibility/100}%</b> \n
+                            Wind speed: <b>${weather.wind.speed} m/s</b>, 
+                            degree: <b>${weather.wind.deg}°</b> \n
+                            Clouds: <b>${weather.clouds.all}%</b> \n
+                            `);
         console.log(weather.main.temp - 273.15);
     } catch (e) {
         ctx.reply(`Sorry ${city} is not found in database`);
@@ -80,14 +89,23 @@ bot.on('text', async (ctx) => {
 });
 
 // share with location as geo
-bot.on('location', async (ctx) => {
+bot.on('location', async(ctx) => {
     const location = await ctx.message.location;
     console.log(location);
     try {
         const weather = await axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.longitude}&appid=${weatherAPIToken}`).then(response => response.data);
         console.log(weather.name);
         console.log((weather.main.temp - 273.15).toFixed(1));
-        ctx.replyWithHTML(`Location: <b>${weather.name}</b> \n Temperature: <b>${temperatureConverter(weather.main.temp)}°C </b>`);
+        ctx.replyWithHTML(`Location: <b>${weather.name}</b> \n 
+                           Temperature: <b>${temperatureConverter(weather.main.temp)}°C</b> \n
+                           Feels like: <b>${temperatureConverter(weather.main.feels_like)}°C</b> \n
+                           Pressure: <b>${weather.main.pressure} Pa</b> \n
+                           Humidity: <b>${weather.main.humidity}%</b> \n
+                           Visibility: <b>${weather.visibility/100}%</b> \n
+                           Wind speed: <b>${weather.wind.speed} m/s</b>, 
+                           degree: <b>${weather.wind.deg}°</b> \n
+                           Clouds: <b>${weather.clouds.all}%</b> \n
+                           `);
     } catch (e) {
         ctx.reply('Sorry this location is not found');
         console.error(e.config.url, ctx.message.from.username);
